@@ -5,7 +5,6 @@ SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
 VERSION="1.0.0"
 LOGGING=false
-
 SEPARATER='---------------------------'
 
 function _usage() {
@@ -109,8 +108,8 @@ function _analyse_args_and_options() {
                 exit 1
                 ;;
             -v | --version)
-                echo ${VERSION}
-                exit 1
+                echo ${SCRIPT_NAME} v${VERSION}
+                exit 0
                 ;;
             --verbose)
                 LOGGING=true
