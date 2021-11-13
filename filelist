@@ -3,7 +3,7 @@
 SCRIPT_FILE_NAME=$(basename $0)
 SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
-VERSION="1.0.0"
+VERSION="0.8.0"
 LOGGING=false
 SEPARATER='---------------------------'
 
@@ -14,16 +14,12 @@ function _usage() {
     echo "Options:"
     echo "  -h, --help                     Show help."
     echo "  -v, --version                  Show script version."
-    echo "  -e, --extension ARG            list file specified file extention."
-#    echo "  -b, --long-b [ARG]             sample option: either with or without argument."
-#    echo "  -c, --long-c                   sample option: have no argument."
-#    echo "  -, --                          after this, all value will be argument(s)."
-    echo "      --dotfile                  list dotfile(s)."
-    echo "  -a                             list file in absolute file path."
-#    echo "  -p                             sample flag option."
+    echo "  -e, --extension ARG            List file specified file extention."
+    echo "      --dotfile                  List dotfile(s)."
+    echo "  -a                             List file in absolute file path."
     echo "      --verbose                  Print various logging information"
     echo
-    exit 1
+    exit 0
 }
 
 function _log() {
@@ -93,11 +89,6 @@ function _main() {
 # -------------------------------------------------------------
 
 ARG_VALUES=()
-SAMPLE_OPTION_A=""
-SAMPLE_OPTION_B=""
-SAMPLE_OPTION_FLAG_N=false
-SAMPLE_OPTION_FLAG_L=false
-SAMPLE_OPTION_FLAG_P=false
 
 function _analyse_args_and_options() {
     while (( $# > 0 ))
@@ -122,19 +113,6 @@ function _analyse_args_and_options() {
                 EXT+=($2)
                 shift 2
                 ;;
-#            -b | --long-b)                  # Either with or without argument is possible
-#                set +u
-#                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-#                    shift
-#                else
-#                    SAMPLE_OPTION_B=$2
-#                    shift 2
-#                fi
-#                set -u
-#                ;;
-#            -c | --long-c)                  # no argument
-#                shift
-#                ;;
             -- | -) # after this all args include '-xx', will treat arg value
                 shift
                 ARG_VALUES+=( "$@" )
