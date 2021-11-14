@@ -21,6 +21,7 @@ function _usage() {
 #    echo "  -, --                          after this, all value will be argument(s)."
     echo "      --dotfile                  Also outputs a dot file."
     echo "  -a                             Output with absolute path."
+    echo "  -c                             Show the number of files."
 #    echo "  -p                             sample flag option."
     echo "      --verbose                  Print various logging information"
     echo
@@ -49,6 +50,7 @@ function _verbose() {
     _log "IS_ABSOLUTE_PATH: ${IS_ABSOLUTE_PATH}"
     _log "IS_SHOW_DOT_FILE: ${IS_SHOW_DOT_FILE}"
     _log "DELIMITER: ${DELIMITER}"
+    _log "IS_COUNT: ${IS_COUNT}"
     _log "${SEPARATER}"
 }
 
@@ -57,6 +59,7 @@ EXT=()
 IS_ABSOLUTE_PATH=false
 IS_SHOW_DOT_FILE=false
 DELIMITER='\n'
+IS_COUNT=false
 
 
 function _main() {
@@ -68,7 +71,8 @@ function _main() {
 
         file=$(echo ${file} | sed 's:^\./::')
 
-        local filename=$(echo ${file} | rev | cut -d '/' -f 1 | rev)
+        #local filename=$(echo ${file} | rev | cut -d '/' -f 1 | rev)
+        local filename=$(basename ${file})
         if [ ${filename:0:1} == '.' ]; then
             ${IS_SHOW_DOT_FILE} || {
                 continue
@@ -91,6 +95,8 @@ function _main() {
             }
         }
     done < <(find "${DIR}" -type f -mindepth 1 -maxdepth 1)
+
+    ${IS_COUNT} && echo ${#results[@]} && exit 0
 
     [ "${DELIMITER}" = '\n' ] && {
         (IFS=$'\n'; echo "${results[*]}")
@@ -167,6 +173,9 @@ function _analyse_args_and_options() {
             -*) # for true or false flags, no argument
                 if [[ "$1" =~ 'a' ]]; then
                     IS_ABSOLUTE_PATH=true
+                fi
+                if [[ "$1" =~ 'c' ]]; then
+                    IS_COUNT=true
                 fi
                 shift
                 ;;
