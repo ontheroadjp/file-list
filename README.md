@@ -26,6 +26,12 @@ $ filelist --dotfile
 
 # list includes files which has extension of jpg or png
 $ filelist -e jpg -e png
+
+# show file count 
+$ filelist -c
+
+# show specific file type count
+$ filelist -c -e md
 ```
 
 
