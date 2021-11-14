@@ -8,18 +8,19 @@ LOGGING=false
 SEPARATER='---------------------------'
 
 function _usage() {
-    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [SEED_FILE]"
-    echo "  This script is ~."
+    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [DIR PATH]"
+    echo "  This script outputs a list of files in the specified directory."
     echo
     echo "Options:"
     echo "  -h, --help                     Show help."
     echo "  -v, --version                  Show script version."
-    echo "  -e, --extension ARG            list file specified file extention."
+    echo "  -e, --extension val            Limit the output file to the extension of siblings."
+    echo "  -d, --delimiter val            Delimiter at output."
 #    echo "  -b, --long-b [ARG]             sample option: either with or without argument."
 #    echo "  -c, --long-c                   sample option: have no argument."
 #    echo "  -, --                          after this, all value will be argument(s)."
-    echo "      --dotfile                  list dotfile(s)."
-    echo "  -a                             list file in absolute file path."
+    echo "      --dotfile                  Also outputs a dot file."
+    echo "  -a                             Output with absolute path."
 #    echo "  -p                             sample flag option."
     echo "      --verbose                  Print various logging information"
     echo
