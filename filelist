@@ -3,23 +3,24 @@
 SCRIPT_FILE_NAME=$(basename $0)
 SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
-VERSION="1.0.0"
+VERSION="1.1.0"
 LOGGING=false
 SEPARATER='---------------------------'
 
 function _usage() {
-    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [SEED_FILE]"
-    echo "  This script is ~."
+    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [DIR PATH]"
+    echo "  This script outputs a list of files in the specified directory."
     echo
     echo "Options:"
     echo "  -h, --help                     Show help."
     echo "  -v, --version                  Show script version."
-    echo "  -e, --extension ARG            list file specified file extention."
+    echo "  -e, --extension val            Limit the output file to the extension of siblings."
+    echo "  -d, --delimiter val            Delimiter at output."
 #    echo "  -b, --long-b [ARG]             sample option: either with or without argument."
 #    echo "  -c, --long-c                   sample option: have no argument."
 #    echo "  -, --                          after this, all value will be argument(s)."
-    echo "      --dotfile                  list dotfile(s)."
-    echo "  -a                             list file in absolute file path."
+    echo "      --dotfile                  Also outputs a dot file."
+    echo "  -a                             Output with absolute path."
 #    echo "  -p                             sample flag option."
     echo "      --verbose                  Print various logging information"
     echo
@@ -47,6 +48,7 @@ function _verbose() {
     _log "EXT: ${EXT[@]}"
     _log "IS_ABSOLUTE_PATH: ${IS_ABSOLUTE_PATH}"
     _log "IS_SHOW_DOT_FILE: ${IS_SHOW_DOT_FILE}"
+    _log "DELIMITER: ${DELIMITER}"
     _log "${SEPARATER}"
 }
 
@@ -54,38 +56,47 @@ DIR=''
 EXT=()
 IS_ABSOLUTE_PATH=false
 IS_SHOW_DOT_FILE=false
+DELIMITER='\n'
+
 
 function _main() {
+    local results=()
     while read -r file; do
 
         local is_print_ok=true
         local is_dot_file=false
 
         file=$(echo ${file} | sed 's:^\./::')
-        if [ ${file:0:1} == '.' ]; then
+
+        local filename=$(echo ${file} | rev | cut -d '/' -f 1 | rev)
+        if [ ${filename:0:1} == '.' ]; then
             ${IS_SHOW_DOT_FILE} || {
                 continue
             }
         fi
 
         [ ! -z ${EXT} ] && {
-            is_print_ok=false
-            for e in ${EXT[@]}; do
-                if [ "${e}" = "${file##*.}" ]; then
-                   is_print_ok=true
-                   break
-                fi
-            done
+            if [[ " ${EXT[@]} " =~ " ${file##*.} " ]]; then
+                is_print_ok=true
+            else
+                is_print_ok=false
+            fi
         }
 
         ${is_print_ok} &&  {
             ${IS_ABSOLUTE_PATH} && {
-                echo "${SELF}/${file}"
+                results+=("${SELF}/${file}")
             } || {
-                echo "${file}"
+                results+=("${file}")
             }
         }
-    done < <(find ${DIR} -type f -mindepth 1 -maxdepth 1)
+    done < <(find "${DIR}" -type f -mindepth 1 -maxdepth 1)
+
+    [ "${DELIMITER}" = '\n' ] && {
+        (IFS=$'\n'; echo "${results[*]}")
+    } || {
+        (IFS="${DELIMITER}"; echo "${results[*]}")
+    }
 }
 
 # -------------------------------------------------------------
@@ -93,11 +104,7 @@ function _main() {
 # -------------------------------------------------------------
 
 ARG_VALUES=()
-SAMPLE_OPTION_A=""
-SAMPLE_OPTION_B=""
-SAMPLE_OPTION_FLAG_N=false
-SAMPLE_OPTION_FLAG_L=false
-SAMPLE_OPTION_FLAG_P=false
+#SAMPLE_OPTION_B=""
 
 function _analyse_args_and_options() {
     while (( $# > 0 ))
@@ -115,11 +122,22 @@ function _analyse_args_and_options() {
                 LOGGING=true
                 shift
                 ;;
-            -e | --extention)                  # Must have argument
+
+            # Must have argument
+            -e | --extention)
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
                     _err "-e option requires a value."
                 fi
                 EXT+=($2)
+                shift 2
+                ;;
+
+            # Must have argument
+            -d | --delimiter)
+                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                    _err "-d option requires a value."
+                fi
+                DELIMITER=$2
                 shift 2
                 ;;
 #            -b | --long-b)                  # Either with or without argument is possible
@@ -161,11 +179,10 @@ function _analyse_args_and_options() {
 }
 
 function _set_variables() {
-    DIR=${ARG_VALUES[0]}
+    DIR=${ARG_VALUES[0]:=.}
 }
 
 function _verify_variables() {
-    [ -z ${DIR} ] && _err "You need to specify directory."
     [ ! -d ${DIR} ] && _err "No such directory."
     :
 }
