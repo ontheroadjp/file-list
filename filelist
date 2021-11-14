@@ -71,7 +71,6 @@ function _main() {
 
         file=$(echo ${file} | sed 's:^\./::')
 
-        #local filename=$(echo ${file} | rev | cut -d '/' -f 1 | rev)
         local filename=$(basename ${file})
         if [ ${filename:0:1} == '.' ]; then
             ${IS_SHOW_DOT_FILE} || {
@@ -110,7 +109,6 @@ function _main() {
 # -------------------------------------------------------------
 
 ARG_VALUES=()
-#SAMPLE_OPTION_B=""
 
 function _analyse_args_and_options() {
     while (( $# > 0 ))
@@ -146,7 +144,9 @@ function _analyse_args_and_options() {
                 DELIMITER=$2
                 shift 2
                 ;;
-#            -b | --long-b)                  # Either with or without argument is possible
+
+#            # Either with or without argument is possible
+#            -b | --long-b)
 #                set +u
 #                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
 #                    shift
@@ -156,21 +156,29 @@ function _analyse_args_and_options() {
 #                fi
 #                set -u
 #                ;;
-#            -c | --long-c)                  # no argument
+#
+#            # no argument
+#            -c | --long-c)
 #                shift
 #                ;;
-            -- | -) # after this all args include '-xx', will treat arg value
+
+            # after this all args include '-xx', will treat arg value
+            -- | -)
                 shift
                 ARG_VALUES+=( "$@" )
                 break
                 ;;
-            --*) # for true or false flags, no argument
+
+            # for true or false flags, no argument
+            --*)
                 if [[ "$1" =~ 'dotfile' ]]; then
                     IS_SHOW_DOT_FILE=true
                 fi
                 shift
                 ;;
-            -*) # for true or false flags, no argument
+
+            # for true or false flags, no argument
+            -*)
                 if [[ "$1" =~ 'a' ]]; then
                     IS_ABSOLUTE_PATH=true
                 fi
@@ -179,6 +187,8 @@ function _analyse_args_and_options() {
                 fi
                 shift
                 ;;
+
+            # for arguments
             *)
                 ARG_VALUES+=("$1")
                 shift
