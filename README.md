@@ -1,5 +1,5 @@
 # file-list
-This script is generate a file-list within specific directory.
+This script outputs a list of files in the specified directory.
 
 
 
@@ -16,16 +16,16 @@ $ PATH='/path/to/clone/dir:$PATH'
 
 ```bash
 # list files at current directory
-$ filelist .
+$ filelist
 
 # list files with absolute file path
-$ filelist . -a
+$ filelist -a
 
 # include dot files if there
-$ file . --dotfile
+$ filelist --dotfile
 
 # list includes files which has extension of jpg or png
-$ filelist . -e jpg -e png 
+$ filelist -e jpg -e png
 ```
 
 
@@ -36,9 +36,10 @@ $ filelist . -e jpg -e png
 Options:
   -h, --help                     Show help.
   -v, --version                  Show script version.
-  -e, --extension ARG            List file specified file extention.
-      --dotfile                  List dotfile(s).
-  -a                             List file in absolute file path.
+  -e, --extension val            Limit the output file to the extension of siblings.
+  -d, --delimiter val            Delimiter at output.
+      --dotfile                  Also outputs a dot file.
+  -a                             Output with absolute path.
       --verbose                  Print various logging information
 ```
 
