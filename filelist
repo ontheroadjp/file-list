@@ -47,6 +47,7 @@ function _verbose() {
     _log "EXT: ${EXT[@]}"
     _log "IS_ABSOLUTE_PATH: ${IS_ABSOLUTE_PATH}"
     _log "IS_SHOW_DOT_FILE: ${IS_SHOW_DOT_FILE}"
+    _log "DELIMITER: ${DELIMITER}"
     _log "${SEPARATER}"
 }
 
@@ -54,8 +55,11 @@ DIR=''
 EXT=()
 IS_ABSOLUTE_PATH=false
 IS_SHOW_DOT_FILE=false
+DELIMITER='\n'
+
 
 function _main() {
+    local results=()
     while read -r file; do
 
         local is_print_ok=true
@@ -69,23 +73,27 @@ function _main() {
         fi
 
         [ ! -z ${EXT} ] && {
-            is_print_ok=false
-            for e in ${EXT[@]}; do
-                if [ "${e}" = "${file##*.}" ]; then
-                   is_print_ok=true
-                   break
-                fi
-            done
+            if [[ " ${EXT[@]} " =~ " ${file##*.} " ]]; then
+                is_print_ok=true
+            else
+                is_print_ok=false
+            fi
         }
 
         ${is_print_ok} &&  {
             ${IS_ABSOLUTE_PATH} && {
-                echo "${SELF}/${file}"
+                results+=("${SELF}/${file}")
             } || {
-                echo "${file}"
+                results+=("${file}")
             }
         }
     done < <(find ${DIR} -type f -mindepth 1 -maxdepth 1)
+
+    [ "${DELIMITER}" = '\n' ] && {
+        (IFS=$'\n'; echo "${results[*]}")
+    } || {
+        (IFS="${DELIMITER}"; echo "${results[*]}")
+    }
 }
 
 # -------------------------------------------------------------
@@ -115,11 +123,22 @@ function _analyse_args_and_options() {
                 LOGGING=true
                 shift
                 ;;
-            -e | --extention)                  # Must have argument
+
+            # Must have argument
+            -e | --extention)
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
                     _err "-e option requires a value."
                 fi
                 EXT+=($2)
+                shift 2
+                ;;
+
+            # Must have argument
+            -d | --delimiter)
+                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                    _err "-d option requires a value."
+                fi
+                DELIMITER=$2
                 shift 2
                 ;;
 #            -b | --long-b)                  # Either with or without argument is possible
