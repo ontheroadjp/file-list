@@ -3,7 +3,11 @@
 SCRIPT_FILE_NAME=$(basename $0)
 SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
+
 VERSION="0.8.0"
+
+VERSION="1.1.5"
+
 LOGGING=false
 SEPARATER='---------------------------'
 
@@ -14,11 +18,14 @@ function _usage() {
     echo "Options:"
     echo "  -h, --help                     Show help."
     echo "  -v, --version                  Show script version."
-    echo "  -e, --extension ARG            List file specified file extention."
-    echo "      --dotfile                  List dotfile(s)."
-    echo "  -a                             List file in absolute file path."
+    echo "  -e, --extension val            Limit the output file to the extension of siblings."
+    echo "  -d, --delimiter val            Delimiter at output."
+    echo "      --dotfile                  Also outputs a dot file."
+    echo "  -a                             Output with absolute path."
+    echo "  -c                             Show the number of files."
+
     echo "      --verbose                  Print various logging information"
-    echo "  -o, --output ARG               List file in the specified file."
+    echo "  -o, --output val               List file in the specified file."
     echo
     exit 0
 }
@@ -44,6 +51,8 @@ function _verbose() {
     _log "EXT: ${EXT[@]}"
     _log "IS_ABSOLUTE_PATH: ${IS_ABSOLUTE_PATH}"
     _log "IS_SHOW_DOT_FILE: ${IS_SHOW_DOT_FILE}"
+    _log "DELIMITER: ${DELIMITER}"
+    _log "IS_COUNT: ${IS_COUNT}"
     _log "${SEPARATER}"
 }
 
@@ -51,8 +60,13 @@ DIR=''
 EXT=()
 IS_ABSOLUTE_PATH=false
 IS_SHOW_DOT_FILE=false
+
 IS_OUTPUT_FILE=false
 OUTPUT=""
+
+DELIMITER='\n'
+IS_COUNT=false
+
 
 function _main() {
 
@@ -64,7 +78,13 @@ function _main() {
         file=$(echo ${file} | sed 's:^\./::')
         
 
+
         if [ ${file:0:1} == '.' ]; then
+
+        #local filename=$(echo ${file} | rev | cut -d '/' -f 1 | rev)
+        local filename=$(basename ${file})
+        if [ ${filename:0:1} == '.' ]; then
+
             ${IS_SHOW_DOT_FILE} || {
                 continue
             }
@@ -98,11 +118,24 @@ function _main() {
                     echo "${file}"
                     }
             }
+
     } 
     done < <(find ${DIR} -type f -mindepth 1 -maxdepth 1) 
     if [[ -s $OUTPUT ]];then
         sed -i "/$OUTPUT/d" $OUTPUT
     fi
+
+        }
+    done < <(find "${DIR}" -type f -mindepth 1 -maxdepth 1)
+
+    ${IS_COUNT} && echo ${#results[@]} && exit 0
+
+    [ "${DELIMITER}" = '\n' ] && {
+        (IFS=$'\n'; echo "${results[*]}")
+    } || {
+        (IFS="${DELIMITER}"; echo "${results[*]}")
+    }
+
 }
 
 # -------------------------------------------------------------
@@ -163,6 +196,9 @@ function _analyse_args_and_options() {
             -*) # for true or false flags, no argument
                 if [[ "$1" =~ 'a' ]]; then
                     IS_ABSOLUTE_PATH=true
+                fi
+                if [[ "$1" =~ 'c' ]]; then
+                    IS_COUNT=true
                 fi
                 shift
                 ;;
