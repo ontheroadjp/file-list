@@ -3,7 +3,7 @@
 SCRIPT_FILE_NAME=$(basename $0)
 SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
-VERSION="1.1.0"
+VERSION="1.1.5"
 LOGGING=false
 SEPARATER='---------------------------'
 
@@ -22,6 +22,7 @@ function _usage() {
 #    echo "  -, --                          after this, all value will be argument(s)."
     echo "      --dotfile                  Also outputs a dot file."
     echo "  -a                             Output with absolute path."
+    echo "  -c                             Show the number of files."
 #    echo "  -p                             sample flag option."
     echo "      --verbose                  Print various logging information"
     echo
@@ -51,6 +52,7 @@ function _verbose() {
     _log "IS_SHOW_DOT_FILE: ${IS_SHOW_DOT_FILE}"
     _log "DELIMITER: ${DELIMITER}"
 #    _log "SHOW_UNUSED_CHAR: ${SHOW_UNUSED_CHAR}"
+    _log "IS_COUNT: ${IS_COUNT}"
     _log "${SEPARATER}"
 }
 
@@ -60,6 +62,7 @@ IS_ABSOLUTE_PATH=false
 IS_SHOW_DOT_FILE=false
 #SHOW_UNUSED_CHAR=false
 DELIMITER='\n'
+IS_COUNT=false
 
 #function _unused_char() {
 #    local chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
@@ -83,8 +86,8 @@ function _main() {
 
         file=$(echo "${file}" | sed 's:^\./::')
 
-        local filename=$(echo "${file}" | rev | cut -d '/' -f 1 | rev)
-        if [ "${filename:0:1}" == '.' ]; then
+        local filename=$(basename ${file})
+        if [ ${filename:0:1} == '.' ]; then
             ${IS_SHOW_DOT_FILE} || {
                 continue
             }
@@ -111,11 +114,12 @@ function _main() {
 #        ( IFS="\n"; echo "unused char: $(_unused_char $(echo ${results[*]}))" )
 #    }
 
+    ${IS_COUNT} && echo ${#results[@]} && exit 0
+
     [ "${DELIMITER}" = '\n' ] && {
         (IFS=$'\n'; echo "${results[*]}")
     } || {
         #(IFS="${DELIMITER}"; echo "${results[*]}")
-
         ( IFS=$'\n'
             for i in ${results[@]}; do
                 local str+="${i}${DELIMITER}"
@@ -130,7 +134,6 @@ function _main() {
 # -------------------------------------------------------------
 
 ARG_VALUES=()
-#SAMPLE_OPTION_B=""
 
 function _analyse_args_and_options() {
     while (( $# > 0 ))
@@ -166,7 +169,9 @@ function _analyse_args_and_options() {
                 DELIMITER=$2
                 shift 2
                 ;;
-#            -b | --long-b)                  # Either with or without argument is possible
+
+#            # Either with or without argument is possible
+#            -b | --long-b)
 #                set +u
 #                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
 #                    shift
@@ -180,23 +185,34 @@ function _analyse_args_and_options() {
                 SHOW_UNUSED_CHAR=true
                 shift
                 ;;
-            -- | -) # after this all args include '-xx', will treat arg value
+
+            # after this all args include '-xx', will treat arg value
+            -- | -)
                 shift
                 ARG_VALUES+=( "$@" )
                 break
                 ;;
-            --*) # for true or false flags, no argument
+
+            # for true or false flags, no argument
+            --*)
                 if [[ "$1" =~ 'dotfile' ]]; then
                     IS_SHOW_DOT_FILE=true
                 fi
                 shift
                 ;;
-            -*) # for true or false flags, no argument
+
+            # for true or false flags, no argument
+            -*)
                 if [[ "$1" =~ 'a' ]]; then
                     IS_ABSOLUTE_PATH=true
                 fi
+                if [[ "$1" =~ 'c' ]]; then
+                    IS_COUNT=true
+                fi
                 shift
                 ;;
+
+            # for arguments
             *)
                 ARG_VALUES+=("$1")
                 shift
