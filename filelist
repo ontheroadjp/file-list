@@ -16,6 +16,7 @@ function _usage() {
     echo "  -v, --version                  Show script version."
     echo "  -e, --extension val            Limit the output file to the extension of siblings."
     echo "  -d, --delimiter val            Delimiter at output."
+#    echo "  -u, --unused-char              Display unused charactor in file list."
 #    echo "  -b, --long-b [ARG]             sample option: either with or without argument."
 #    echo "  -c, --long-c                   sample option: have no argument."
 #    echo "  -, --                          after this, all value will be argument(s)."
@@ -49,6 +50,7 @@ function _verbose() {
     _log "IS_ABSOLUTE_PATH: ${IS_ABSOLUTE_PATH}"
     _log "IS_SHOW_DOT_FILE: ${IS_SHOW_DOT_FILE}"
     _log "DELIMITER: ${DELIMITER}"
+#    _log "SHOW_UNUSED_CHAR: ${SHOW_UNUSED_CHAR}"
     _log "${SEPARATER}"
 }
 
@@ -56,8 +58,21 @@ DIR=''
 EXT=()
 IS_ABSOLUTE_PATH=false
 IS_SHOW_DOT_FILE=false
+#SHOW_UNUSED_CHAR=false
 DELIMITER='\n'
 
+#function _unused_char() {
+#    local chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+#    local letters=($(echo ${chars} | fold -w 1 | tr '\n' ' '))
+#    IFS=" "
+#    for l in ${letters[@]}; do
+#        if [[ ! "$1" =~ "$l" ]]; then
+#            echo $l
+#            return
+#        fi
+#    done
+#    echo 'nothing'
+#}
 
 function _main() {
     local results=()
@@ -66,10 +81,10 @@ function _main() {
         local is_print_ok=true
         local is_dot_file=false
 
-        file=$(echo ${file} | sed 's:^\./::')
+        file=$(echo "${file}" | sed 's:^\./::')
 
-        local filename=$(echo ${file} | rev | cut -d '/' -f 1 | rev)
-        if [ ${filename:0:1} == '.' ]; then
+        local filename=$(echo "${file}" | rev | cut -d '/' -f 1 | rev)
+        if [ "${filename:0:1}" == '.' ]; then
             ${IS_SHOW_DOT_FILE} || {
                 continue
             }
@@ -92,10 +107,21 @@ function _main() {
         }
     done < <(find "${DIR}" -type f -mindepth 1 -maxdepth 1)
 
+#    ${SHOW_UNUSED_CHAR} && {
+#        ( IFS="\n"; echo "unused char: $(_unused_char $(echo ${results[*]}))" )
+#    }
+
     [ "${DELIMITER}" = '\n' ] && {
         (IFS=$'\n'; echo "${results[*]}")
     } || {
-        (IFS="${DELIMITER}"; echo "${results[*]}")
+        #(IFS="${DELIMITER}"; echo "${results[*]}")
+
+        ( IFS=$'\n'
+            for i in ${results[@]}; do
+                local str+="${i}${DELIMITER}"
+            done
+            echo ${str}
+        )
     }
 }
 
@@ -150,9 +176,10 @@ function _analyse_args_and_options() {
 #                fi
 #                set -u
 #                ;;
-#            -c | --long-c)                  # no argument
-#                shift
-#                ;;
+            -u | --unused-char)                  # no argument
+                SHOW_UNUSED_CHAR=true
+                shift
+                ;;
             -- | -) # after this all args include '-xx', will treat arg value
                 shift
                 ARG_VALUES+=( "$@" )
@@ -197,4 +224,5 @@ _analyse_args_and_options $@ && {
         _main
     }
 }
+
 exit 0
