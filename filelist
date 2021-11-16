@@ -3,11 +3,7 @@
 SCRIPT_FILE_NAME=$(basename $0)
 SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
-
-VERSION="0.8.0"
-
 VERSION="1.1.5"
-
 LOGGING=false
 SEPARATER='---------------------------'
 
@@ -23,7 +19,6 @@ function _usage() {
     echo "      --dotfile                  Also outputs a dot file."
     echo "  -a                             Output with absolute path."
     echo "  -c                             Show the number of files."
-
     echo "      --verbose                  Print various logging information"
     echo "  -o, --output val               List file in the specified file."
     echo
@@ -60,16 +55,14 @@ DIR=''
 EXT=()
 IS_ABSOLUTE_PATH=false
 IS_SHOW_DOT_FILE=false
-
+DELIMITER='\n'
+IS_COUNT=false
 IS_OUTPUT_FILE=false
 OUTPUT=""
 
-DELIMITER='\n'
-IS_COUNT=false
-
 
 function _main() {
-
+    local results=()
     while read -r file; do
 
         local is_print_ok=true
@@ -77,63 +70,59 @@ function _main() {
 
         file=$(echo ${file} | sed 's:^\./::')
         
-
-
-        if [ ${file:0:1} == '.' ]; then
-
         #local filename=$(echo ${file} | rev | cut -d '/' -f 1 | rev)
         local filename=$(basename ${file})
         if [ ${filename:0:1} == '.' ]; then
-
             ${IS_SHOW_DOT_FILE} || {
                 continue
             }
         fi
 
         [ ! -z ${EXT} ] && {
-            is_print_ok=false
-            for e in ${EXT[@]}; do
-                if [ "${e}" = "${file##*.}" ]; then
-                   is_print_ok=true
-                   break
-                fi
-            done
-
-            if [[ -n $OUTPUT ]]; then
+            if [[ " ${EXT[@]} " =~ " ${file##*.} " ]]; then       
                 is_print_ok=true
+            else
+                is_print_ok=false
             fi
         }
 
-        ${is_print_ok} &&  {
+        if [[ -n $OUTPUT ]]; then
+            is_print_ok=true
+        fi
+
+        ${is_print_ok} && {
             ${IS_ABSOLUTE_PATH} && {
-                ${IS_OUTPUT_FILE} && {
-                    echo "${SELF}/${file}" >>$OUTPUT
-                } || {
-                        echo "${SELF}/${file}" 
-                    }
-            } || { 
-                ${IS_OUTPUT_FILE} && {
-                echo "${file}" >>$OUTPUT
-                } || {
-                    echo "${file}"
-                    }
+            results+=("${SELF}/${file}")
+            } || {
+                # If you do not want the output file to be listed, uncomment this
+                : '
+                if [[ -n $OUTPUT ]]; then
+                    if [ ! ${file} = $OUTPUT ]; then
+                        results+=("${file}")
+                    fi
+                else
+                    results+=("${file}")
+                fi
+                '
+                results+=("${file}") # delete this line after uncommenting
             }
-
-    } 
-    done < <(find ${DIR} -type f -mindepth 1 -maxdepth 1) 
-    if [[ -s $OUTPUT ]];then
-        sed -i "/$OUTPUT/d" $OUTPUT
-    fi
-
         }
-    done < <(find "${DIR}" -type f -mindepth 1 -maxdepth 1)
+    done < <(find ${DIR} -type f -mindepth 1 -maxdepth 1) 
 
     ${IS_COUNT} && echo ${#results[@]} && exit 0
 
     [ "${DELIMITER}" = '\n' ] && {
+         ${IS_OUTPUT_FILE} && {
+            (IFS=$'\n'; echo "${results[*]}" >>$OUTPUT)
+        } || {
         (IFS=$'\n'; echo "${results[*]}")
+        }
     } || {
+        [ "${IS_OUTPUT_FILE}" ] && {
+            (IFS="${DELIMITER}"; echo "${results[*]}" >>$OUTPUT)
+        } || {
         (IFS="${DELIMITER}"; echo "${results[*]}")
+        }   
     }
 
 }
@@ -165,6 +154,14 @@ function _analyse_args_and_options() {
                     _err "-e option requires a value."
                 fi
                 EXT+=($2)
+                shift 2
+                ;;
+            # Must have argument
+            -d | --delimiter)
+                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                    _err "-d option requires a value."
+                fi
+                DELIMITER=$2
                 shift 2
                 ;;
             -o | --output)                  
