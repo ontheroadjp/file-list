@@ -25,7 +25,13 @@ $ filelist -a
 $ filelist --dotfile
 
 # list includes files which has extension of jpg or png
-$ filelist -e jpg -e png 
+$ filelist -e jpg -e png
+
+# show file count 
+$ filelist -c
+
+# show specific file type count
+$ filelist -c -e md
 ```
 
 
@@ -40,6 +46,7 @@ Options:
   -d, --delimiter val            Delimiter at output.
       --dotfile                  Also outputs a dot file.
   -a                             Output with absolute path.
+  -c                             Show the number of files.
       --verbose                  Print various logging information
 ```
 
