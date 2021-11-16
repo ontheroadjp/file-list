@@ -118,7 +118,7 @@ function _main() {
         (IFS=$'\n'; echo "${results[*]}")
         }
     } || {
-        [ "${IS_OUTPUT_FILE}" ] && {
+        ${IS_OUTPUT_FILE} && {
             (IFS="${DELIMITER}"; echo "${results[*]}" >>$OUTPUT)
         } || {
         (IFS="${DELIMITER}"; echo "${results[*]}")
