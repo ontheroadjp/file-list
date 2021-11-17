@@ -1,8 +1,13 @@
-while read local_ref local_sha1 remote_ref remote_sha1
-do
-  MESSAGES=`git log --oneline origin/${remote_ref##refs/heads/}..HEAD | awk '{print $2}'`
-  if [[ $MESSAGES =~ (WIP|wip|temp|tmp) ]]; then
-    echo "You need to rebase -i. (ex. git rebase -i HEAD~5)"
-    exit 1
-  fi
-done
+#!/bin/sh
+# Prevent you from pushing commits that have "WIP" in the message
+
+branch=`git branch 2>/dev/null | grep '^*' | colrm 1 2`
+
+git log $branch ^origin/$branch --pretty="format:%h %s" | grep "WIP"
+
+if [[ $? -eq 0 ]]; then
+  echo "Found commits with WIP messages"
+  exit 1
+fi
+
+exit 0
