@@ -1,0 +1,8 @@
+while read local_ref local_sha1 remote_ref remote_sha1
+do
+  MESSAGES=`git log --oneline origin/${remote_ref##refs/heads/}..HEAD | awk '{print $2}'`
+  if [[ $MESSAGES =~ (WIP|wip|temp|tmp) ]]; then
+    echo "You need to rebase -i. (ex. git rebase -i HEAD~5)"
+    exit 1
+  fi
+done
