@@ -124,7 +124,7 @@ function _main() {
             for i in ${results[@]}; do
                 local str+="${i}${DELIMITER}"
             done
-            echo ${str}
+            echo $(echo ${str} | sed "s/${DELIMITER}$//")
         )
     }
 }
@@ -226,8 +226,14 @@ function _set_variables() {
 }
 
 function _verify_variables() {
+    local ng=('^' '*' '-' '\' '/' '[' ']')
+    set -f
+    if [[ "${ng[@]}" =~ "${DELIMITER}" ]]; then
+        _err "Characters that cannot be used in delimiters: $(echo ${ng[@]})"
+    fi
+
     [ ! -d ${DIR} ] && _err "No such directory."
-    :
+   :
 }
 
 # -------------------------------------------------------------
