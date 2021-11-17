@@ -3,7 +3,7 @@
 SCRIPT_FILE_NAME=$(basename $0)
 SCRIPT_NAME=${SCRIPT_FILE_NAME%.*}
 SELF=$(cd $(dirname $0); pwd)
-VERSION="1.1.5"
+VERSION="1.2.0"
 LOGGING=false
 SEPARATER='---------------------------'
 
@@ -30,7 +30,7 @@ function _log() {
 }
 
 function _err() {
-    echo "[err] $1" && exit 1
+    echo "${SCRIPT_NAME}: $1" && exit ${2:-1}
 }
 
 function _args_count() {
@@ -68,9 +68,8 @@ function _main() {
         local is_print_ok=true
         local is_dot_file=false
 
-        file=$(echo ${file} | sed 's:^\./::')
-        
-        #local filename=$(echo ${file} | rev | cut -d '/' -f 1 | rev)
+        file=$(echo "${file}" | sed 's:^\./::')
+
         local filename=$(basename ${file})
         if [ ${filename:0:1} == '.' ]; then
             ${IS_SHOW_DOT_FILE} || {
@@ -112,19 +111,18 @@ function _main() {
     ${IS_COUNT} && echo ${#results[@]} && exit 0
 
     [ "${DELIMITER}" = '\n' ] && {
-         ${IS_OUTPUT_FILE} && {
-            (IFS=$'\n'; echo "${results[*]}" >>$OUTPUT)
-        } || {
-        (IFS=$'\n'; echo "${results[*]}")
-        }
+      ( IFS=$'\n'
+         ${IS_OUTPUT_FILE} && echo "${results[*]}" >> ${OUTPUT} || echo "${results[*]}"
+      )
     } || {
-        ${IS_OUTPUT_FILE} && {
-            (IFS="${DELIMITER}"; echo "${results[*]}" >>$OUTPUT)
-        } || {
-        (IFS="${DELIMITER}"; echo "${results[*]}")
-        }   
+      ( IFS=$'\n'
+        for i in ${results[@]}; do
+          local str+="${i}${DELIMITER}"
+        done
+        str=$(echo ${str} | sed "s/${DELIMITER}$//")
+        ${IS_OUTPUT_FILE} && echo ${str} >> ${OUTPUT} || echo ${str}
+      )
     }
-
 }
 
 # -------------------------------------------------------------
@@ -184,13 +182,17 @@ function _analyse_args_and_options() {
                 ARG_VALUES+=( "$@" )
                 break
                 ;;
-            --*) # for true or false flags, no argument
+
+            # for true or false flags, no argument
+            --*)
                 if [[ "$1" =~ 'dotfile' ]]; then
                     IS_SHOW_DOT_FILE=true
                 fi
                 shift
                 ;;
-            -*) # for true or false flags, no argument
+
+            # for true or false flags, no argument
+            -*)
                 if [[ "$1" =~ 'a' ]]; then
                     IS_ABSOLUTE_PATH=true
                 fi
@@ -199,6 +201,8 @@ function _analyse_args_and_options() {
                 fi
                 shift
                 ;;
+
+            # for arguments
             *)
                 ARG_VALUES+=("$1")
                 shift
@@ -208,13 +212,18 @@ function _analyse_args_and_options() {
 }
 
 function _set_variables() {
-    DIR=${ARG_VALUES[0]}
+    DIR=${ARG_VALUES[0]:=.}
+    return 0
 }
 
 function _verify_variables() {
-    [ -z ${DIR} ] && _err "You need to specify directory."
-    [ ! -d ${DIR} ] && _err "No such directory."
-    :
+    local ng=('^' '*' '-' '\' '/' '[' ']')
+    if [[ "${ng[@]}" =~ "${DELIMITER}" ]]; then
+        _err "bad delimiter"
+    fi
+
+    [ ! -d ${DIR} ] && _err "No such directory"
+    return 0
 }
 
 # -------------------------------------------------------------
@@ -227,4 +236,5 @@ _analyse_args_and_options $@ && {
         _main
     }
 }
+
 exit 0
