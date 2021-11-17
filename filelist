@@ -8,8 +8,8 @@ LOGGING=false
 SEPARATER='---------------------------'
 
 function _usage() {
-    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [DIR PATH]"
-    echo "  This script outputs a list of files in the specified directory."
+    echo "Usage: ${SCRIPT_NAME} [OPTIONS] [SEED_FILE]"
+    echo "  This script is ~."
     echo
     echo "Options:"
     echo "  -h, --help                     Show help."
@@ -20,6 +20,7 @@ function _usage() {
     echo "  -a                             Output with absolute path."
     echo "  -c                             Show the number of files."
     echo "      --verbose                  Print various logging information"
+    echo "  -o, --output val               List file in the specified file."
     echo
     exit 0
 }
@@ -54,9 +55,11 @@ DIR=''
 EXT=()
 IS_ABSOLUTE_PATH=false
 IS_SHOW_DOT_FILE=false
-#SHOW_UNUSED_CHAR=false
 DELIMITER='\n'
 IS_COUNT=false
+IS_OUTPUT_FILE=false
+OUTPUT=""
+
 
 function _main() {
     local results=()
@@ -75,34 +78,50 @@ function _main() {
         fi
 
         [ ! -z ${EXT} ] && {
-            if [[ " ${EXT[@]} " =~ " ${file##*.} " ]]; then
+            if [[ " ${EXT[@]} " =~ " ${file##*.} " ]]; then       
                 is_print_ok=true
             else
                 is_print_ok=false
             fi
         }
 
-        ${is_print_ok} &&  {
+        if [[ -n $OUTPUT ]]; then
+            is_print_ok=true
+        fi
+
+        ${is_print_ok} && {
             ${IS_ABSOLUTE_PATH} && {
-                results+=("${SELF}/${file}")
+            results+=("${SELF}/${file}")
             } || {
-                results+=("${file}")
+                # If you do not want the output file to be listed, uncomment this
+                : '
+                if [[ -n $OUTPUT ]]; then
+                    if [ ! ${file} = $OUTPUT ]; then
+                        results+=("${file}")
+                    fi
+                else
+                    results+=("${file}")
+                fi
+                '
+                results+=("${file}") # delete this line after uncommenting
             }
         }
-    done < <(find "${DIR}" -type f -mindepth 1 -maxdepth 1)
+    done < <(find ${DIR} -type f -mindepth 1 -maxdepth 1) 
 
     ${IS_COUNT} && echo ${#results[@]} && exit 0
 
     [ "${DELIMITER}" = '\n' ] && {
-        (IFS=$'\n'; echo "${results[*]}")
+      ( IFS=$'\n'
+         ${IS_OUTPUT_FILE} && echo "${results[*]}" >> ${OUTPUT} || echo "${results[*]}"
+      )
     } || {
-        #(IFS="${DELIMITER}"; echo "${results[*]}")
-        ( IFS=$'\n'
-            for i in ${results[@]}; do
-                local str+="${i}${DELIMITER}"
-            done
-            echo $(echo ${str} | sed "s/${DELIMITER}$//")
-        )
+      ( IFS=$'\n'
+        for i in ${results[@]}; do
+          local str+="${i}${DELIMITER}"
+        done
+        str=$(echo ${str} | sed "s/${DELIMITER}$//")
+        ${IS_OUTPUT_FILE} && echo ${str} >> ${OUTPUT} || echo ${str}
+      )
     }
 }
 
@@ -128,16 +147,13 @@ function _analyse_args_and_options() {
                 LOGGING=true
                 shift
                 ;;
-
-            # Must have argument
-            -e | --extention)
+            -e | --extention)                  # Must have argument
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
                     _err "-e option requires a value."
                 fi
                 EXT+=($2)
                 shift 2
                 ;;
-
             # Must have argument
             -d | --delimiter)
                 if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
@@ -146,7 +162,21 @@ function _analyse_args_and_options() {
                 DELIMITER=$2
                 shift 2
                 ;;
-
+            -o | --output)                  
+                if [[ -z "$2" ]]; then
+                    _err "-o option requires a value."
+                else
+                    IS_OUTPUT_FILE=true
+                    OUTPUT=$2
+                    if [[ -s $OUTPUT ]]; then
+                        _err "The specified file already exists!"
+                    else
+                        touch $OUTPUT
+                    fi
+                fi
+                EXT+=($2)
+                shift 2
+                ;;
             -- | -) # after this all args include '-xx', will treat arg value
                 shift
                 ARG_VALUES+=( "$@" )
