@@ -34,7 +34,7 @@ function _log() {
 }
 
 function _err() {
-    echo "[err] $1" && exit 1
+    echo "${SCRIPT_NAME}: $1" && exit ${2:-1}
 }
 
 function _args_count() {
@@ -223,17 +223,17 @@ function _analyse_args_and_options() {
 
 function _set_variables() {
     DIR=${ARG_VALUES[0]:=.}
+    return 0
 }
 
 function _verify_variables() {
     local ng=('^' '*' '-' '\' '/' '[' ']')
-    set -f
     if [[ "${ng[@]}" =~ "${DELIMITER}" ]]; then
-        _err "Characters that cannot be used in delimiters: $(echo ${ng[@]})"
+        _err "bad delimiter"
     fi
 
-    [ ! -d ${DIR} ] && _err "No such directory."
-   :
+    [ ! -d ${DIR} ] && _err "No such directory"
+    return 0
 }
 
 # -------------------------------------------------------------
