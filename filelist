@@ -16,14 +16,9 @@ function _usage() {
     echo "  -v, --version                  Show script version."
     echo "  -e, --extension val            Limit the output file to the extension of siblings."
     echo "  -d, --delimiter val            Delimiter at output."
-#    echo "  -u, --unused-char              Display unused charactor in file list."
-#    echo "  -b, --long-b [ARG]             sample option: either with or without argument."
-#    echo "  -c, --long-c                   sample option: have no argument."
-#    echo "  -, --                          after this, all value will be argument(s)."
     echo "      --dotfile                  Also outputs a dot file."
     echo "  -a                             Output with absolute path."
     echo "  -c                             Show the number of files."
-#    echo "  -p                             sample flag option."
     echo "      --verbose                  Print various logging information"
     echo
     exit 1
@@ -51,7 +46,6 @@ function _verbose() {
     _log "IS_ABSOLUTE_PATH: ${IS_ABSOLUTE_PATH}"
     _log "IS_SHOW_DOT_FILE: ${IS_SHOW_DOT_FILE}"
     _log "DELIMITER: ${DELIMITER}"
-#    _log "SHOW_UNUSED_CHAR: ${SHOW_UNUSED_CHAR}"
     _log "IS_COUNT: ${IS_COUNT}"
     _log "${SEPARATER}"
 }
@@ -63,19 +57,6 @@ IS_SHOW_DOT_FILE=false
 #SHOW_UNUSED_CHAR=false
 DELIMITER='\n'
 IS_COUNT=false
-
-#function _unused_char() {
-#    local chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-#    local letters=($(echo ${chars} | fold -w 1 | tr '\n' ' '))
-#    IFS=" "
-#    for l in ${letters[@]}; do
-#        if [[ ! "$1" =~ "$l" ]]; then
-#            echo $l
-#            return
-#        fi
-#    done
-#    echo 'nothing'
-#}
 
 function _main() {
     local results=()
@@ -109,10 +90,6 @@ function _main() {
             }
         }
     done < <(find "${DIR}" -type f -mindepth 1 -maxdepth 1)
-
-#    ${SHOW_UNUSED_CHAR} && {
-#        ( IFS="\n"; echo "unused char: $(_unused_char $(echo ${results[*]}))" )
-#    }
 
     ${IS_COUNT} && echo ${#results[@]} && exit 0
 
@@ -170,17 +147,6 @@ function _analyse_args_and_options() {
                 shift 2
                 ;;
 
-#            # Either with or without argument is possible
-#            -b | --long-b)
-#                set +u
-#                if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
-#                    shift
-#                else
-#                    SAMPLE_OPTION_B=$2
-#                    shift 2
-#                fi
-#                set -u
-#                ;;
             -u | --unused-char)                  # no argument
                 SHOW_UNUSED_CHAR=true
                 shift
