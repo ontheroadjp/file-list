@@ -113,18 +113,18 @@ function _main() {
 #    ${SHOW_UNUSED_CHAR} && {
 #        ( IFS="\n"; echo "unused char: $(_unused_char $(echo ${results[*]}))" )
 #    }
+
     ${IS_COUNT} && echo ${#results[@]} && exit 0
 
     [ "${DELIMITER}" = '\n' ] && {
         (IFS=$'\n'; echo "${results[*]}")
     } || {
         #(IFS="${DELIMITER}"; echo "${results[*]}")
-
         ( IFS=$'\n'
             for i in ${results[@]}; do
                 local str+="${i}${DELIMITER}"
             done
-            echo ${str}
+            echo $(echo ${str} | sed "s/${DELIMITER}$//")
         )
     }
 }
