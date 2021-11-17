@@ -1,4 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
-echo '[git] pre-commit...'
-tests/filelist.bats
+if git log -1 --oneline --pretty=format:'%s' | grep -q -e '^\[WIP\]'
+then
+  last_commit=`git log -1 --date=raw --pretty=format:"%ad"`
+  current_commit=$GIT_AUTHOR_DATE
+  if echo "$current_commit" | grep -q -v "$last_commit"
+  then
+    echo "last commit is wip commit!!"
+    exit 1
+  fi
+fi
