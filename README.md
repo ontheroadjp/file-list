@@ -45,8 +45,17 @@ Options:
   -e, --extension val            Limit the output file to the extension of siblings.
   -d, --delimiter val            Delimiter at output.
       --dotfile                  Also outputs a dot file.
+  -o, --output val               List file in the specified file.
   -a                             Output with absolute path.
   -c                             Show the number of files.
       --verbose                  Print various logging information
+```
+
+
+
+## testing
+
+```bash
+$ git config --local core.hooksPath .githooks
 ```
 
